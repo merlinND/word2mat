@@ -104,6 +104,7 @@ class Word2MatEncoder(nn.Module):
     def _continual_multiplication(self, word_matrices):
         cur_emb = word_matrices[:, 0, :]
         for i in range(1, word_matrices.size()[1]):
+            # TODO: add optional ReLu nonlinearity  (nn.relu) 
             cur_emb = torch.bmm(cur_emb, word_matrices[:, i, :])
         return cur_emb
 
