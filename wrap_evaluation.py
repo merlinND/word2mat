@@ -16,8 +16,8 @@ from mutils import run_hyperparameter_optimization, write_to_csv
 from warnings import warn
 
 # Set PATHs to SentEval
-PATH_SENTEVAL = '/data22/fmai/data/SentEval/SentEval/'
-PATH_TO_DATA = '/data22/fmai/data/SentEval/SentEval/data'
+PATH_SENTEVAL = '../SentEval/'
+PATH_TO_DATA = '../SentEval/data'
 assert os.path.exists(PATH_SENTEVAL) and os.path.exists(PATH_TO_DATA), "Set path to SentEval + data correctly!"
 
 # import senteval
@@ -59,7 +59,7 @@ def _run_experiment_and_save(run_experiment, params, batcher, prepare):
     if params.downstream_eval:
         downstream_scores = _evaluate_downstream_and_probing_tasks(encoder, params, batcher, prepare)
 
-        # from each downstream task, only select scores we care about    
+        # from each downstream task, only select scores we care about
         to_be_saved_scores = {}
         for score_name in downstream_scores:
             to_be_saved_scores[score_name] = _get_score_for_name(downstream_scores, score_name)
@@ -84,7 +84,7 @@ def _save_embeddings_to_word2vec(encoder, outputmodelname, params):
     # Load lookup table as numpy
     embeddings = encoder.lookup_table
     embeddings = embeddings.weight.data.cpu().numpy()
-        
+
     # Load (inverse) vocabulary to match ids to words
     path_to_vocabulary = os.path.join(params.outputdir, outputmodelname + '.vocab')
     vocabulary = pickle.load(open(path_to_vocabulary, "rb" ))[0]
@@ -97,7 +97,7 @@ def _save_embeddings_to_word2vec(encoder, outputmodelname, params):
     for i in range(1, embeddings.shape[0]): # skip the padding token
         cur_word = inverse_vocab[i]
         f.write(" ".join([cur_word] + [str(embeddings[i, j]) for j in range(embeddings.shape[1])]) + "\n")
-        
+
     f.close()
 
     return output_path
@@ -106,7 +106,7 @@ def _evaluate_downstream_and_probing_tasks(encoder, params, batcher, prepare):
     # define senteval params
     eval_type = sys.argv[1] if len(sys.argv) > 1 else ""
     if params.downstream_eval == "full":
-        
+
         ## for comparable evaluation (as in literature)
         params_senteval = {'task_path': PATH_TO_DATA, 'usepytorch': True, 'kfold': 10}
         params_senteval['classifier'] = {'nhid': params.nhid, 'optim': 'adam', 'batch_size': 64,
@@ -141,7 +141,7 @@ def construct_model_name(names, params):
         params_dict = vars(params)
 
         for key in names:
-            
+
             name += str(key) + ":" + str(params_dict[key]) + "-"
 
     return name
@@ -173,7 +173,7 @@ def _add_common_arguments(parser):
                             'SICKEntailment', 'SICKRelatedness', 'STSBenchmark',
                             'STS12', 'STS13', 'STS14', 'STS15', 'STS16',
                             'Length', 'WordContent', 'Depth', 'TopConstituents','BigramShift', 'Tense',
-                            'SubjNumber', 'ObjNumber', 'OddManOut', 'CoordinationInversion'], 
+                            'SubjNumber', 'ObjNumber', 'OddManOut', 'CoordinationInversion'],
                          help="Downstream tasks to evaluate on.",
                         choices = ['CR', 'MR', 'MPQA', 'SUBJ', 'SST2', 'SST5', 'TREC', 'MRPC', 'SNLI',
                             'SICKEntailment', 'SICKRelatedness', 'STSBenchmark',
@@ -203,7 +203,7 @@ def run_and_evaluate(run_experiment, get_params_parser, batcher, prepare):
             the arguments parsed from the command line. As output, it has to return the encoder object that will
             at test time be passed to the 'batcher' function.
             The encoder is required to have an attribute 'lookup_table' which is a torch.nn.Embedding.
-            'losses' is a list of successive 
+            'losses' is a list of successive
             (train_loss, val_loss) pairs that will be written to a csv file. If you do not want to track
             the loss, simply return an empty list.
             - params need to include an 'outputmodelname', else the params need to satisfy construct_model_name
@@ -224,9 +224,9 @@ def run_and_evaluate(run_experiment, get_params_parser, batcher, prepare):
     parser = get_params_parser()
     parser = _add_common_arguments(parser)
     params = parser.parse_args()
-    
+
     if params.optimization:
-        def hyperparameter_optimization_func(opts): 
+        def hyperparameter_optimization_func(opts):
             results = _run_experiment_and_save(run_experiment, opts, batcher, prepare)
             return results["CR"]
         run_hyperparameter_optimization(params, hyperparameter_optimization_func)

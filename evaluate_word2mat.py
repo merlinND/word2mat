@@ -12,15 +12,9 @@ import numpy as np
 import pandas as pd
 import argparse
 
-from wrap_evaluation import run_and_evaluate
-
-from data import get_index_batch
-
+from wrap_evaluation import run_and_evaluate, PATH_SENTEVAL, PATH_TO_DATA
+from cbow import get_index_batch
 from torch.autograd import Variable
-
-# Set PATHs
-PATH_SENTEVAL = '/data22/fmai/data/SentEval/SentEval/'
-PATH_TO_DATA = '/data22/fmai/data/SentEval/SentEval/data'
 
 assert os.path.exists(PATH_SENTEVAL) and os.path.exists(PATH_TO_DATA), "Set path to SentEval + data correctly!"
 
