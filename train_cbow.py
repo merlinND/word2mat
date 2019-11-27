@@ -22,12 +22,14 @@ from cbow import CBOWNet, build_vocab, tokenize, CBOWDataset, recursive_file_lis
 
 # Encoder
 from mutils import get_optimizer, run_hyperparameter_optimization, write_to_csv
-from word2mat import get_cbow_cmow_hybrid_encoder, get_cbow_encoder, get_cmow_encoder
+from word2mat import get_cbow_cmow_hybrid_encoder, get_cbow_encoder, get_cmow_encoder, get_cnmow_encoder
 from torch.utils.data.sampler import SubsetRandomSampler
 
 from wrap_evaluation import run_and_evaluate, construct_model_name
 
 import time
+
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 def run_experiment(params):
 
@@ -95,8 +97,14 @@ def run_experiment(params):
     elif params.w2m_type == "hybrid":
         encoder = get_cbow_cmow_hybrid_encoder(n_words, padding_idx = 0,
                                  word_emb_dim = params.word_emb_dim,
-                                 initialization_strategy = params.initialization)
+                                 initialization_strategy = params.initialization, 
+                                 w2m_type = params.hybrid_cmow, _lambda = params._lambda)
         output_embedding_size = 2 * params.word_emb_dim
+    elif params.w2m_type == "cnmow":
+        encoder = get_cnmow_encoder(n_words, padding_idx = 0, 
+                                 word_emb_dim = params.word_emb_dim, 
+                                 initialization_strategy = params.initialization, _lambda = params._lambda)
+        output_embedding_size = params.word_emb_dim
 
     # build cbow model
     cbow_net = CBOWNet(encoder, output_embedding_size, n_words, 
@@ -115,7 +123,7 @@ def run_experiment(params):
     optimizer = optim_fn(cbow_net.parameters(), **optim_params)
 
     # cuda by default
-    cbow_net.cuda()
+    cbow_net.to(device) #.cuda()
 
     """
     TRAIN
@@ -132,8 +140,8 @@ def run_experiment(params):
 
     def forward_pass(X_batch, tgt_batch, params, check_size = False):
 
-        X_batch = Variable(X_batch).cuda()
-        tgt_batch = Variable(torch.LongTensor(tgt_batch)).cuda()
+        X_batch = Variable(X_batch).to(device) #.cuda()
+        tgt_batch = Variable(torch.LongTensor(tgt_batch)).to(device) #.cuda()
         k = X_batch.size(0)  # actual batch size
 
         loss = cbow_net(X_batch, tgt_batch).mean()
@@ -178,6 +186,11 @@ def run_experiment(params):
 
         nonlocal processed_batches, stop_training, no_improvement, min_val_loss, losses, min_loss_criterion
         for i, (X_batch, tgt_batch) in enumerate(cbow_train_loader):
+            
+            # every 10 epochs train the cmow parameters
+            if params.w2m_type == "hybrid":
+                enabled = (i % params.explore_par) == 0
+                cbow_net.encoder.cmow_encoder.lookup_table.weight.requires_grad = enabled
 
             batch_generation_time = (time.time() - start_time) * 1000000
 
@@ -297,6 +310,18 @@ def run_experiment(params):
         cbow_net = cbow_net.module
     return cbow_net.encoder, losses
 
+def check_range(arg):
+    try:
+        value = float(arg)
+    except ValueError as err:
+        raise argparse.ArgumentTypeError(str(err))
+
+    if value < 0 or value > 1:
+        message = "Expected 0 <= value <= 1, got value = {}".format(value)
+        raise argparse.ArgumentTypeError(message)
+
+    return value
+
 def get_params_parser():
 
     parser = argparse.ArgumentParser(description='Training a word2mat model.')
@@ -325,7 +350,7 @@ def get_params_parser():
     parser.add_argument("--num_workers", type=int, default=10, help="How many worker threads to use for creating the samples from the dataset.")
 
     # Word2Mat specific
-    parser.add_argument("--w2m_type", type=str, default='cmow', choices=['cmow', 'cbow', 'hybrid'], help="Choose the encoder to use.")
+    parser.add_argument("--w2m_type", type=str, default='cmow', choices=['cmow', 'cbow', 'hybrid', 'cnmow'], help="Choose the encoder to use.")
     parser.add_argument("--word_emb_dim", type=int, default=100, help="Dimensionality of word embeddings.")
     parser.add_argument("--initialization", type=str, default='identity', help="Initialization strategy to use.", choices = ['one', 'identity', 'normalized', 'normal'])
 
@@ -341,6 +366,13 @@ def get_params_parser():
     parser.add_argument("--mode", type=str, help="Determines the mode of the prediction task, i.e., which word is to be removed from a given window of words. Options are 'cbow' (remove middle word) and 'random' (a random word from the window is removed).", default='random', choices = ['cbow', 'random'])
     parser.add_argument("--n_negs", type=int, default=5, help="How many negative samples to use for training (the larger the dataset, the fewer are required (5).")
 
+    # Hybrid model specific
+    parser.add_argument("--explore_par", type=int, default=1, help="Rate of updating the parameters of the cmow matrices in the hybrid model")
+    parser.add_argument("--hybrid_cmow", type=str, default='cmow', choices=['cmow', 'cnmow'], help="Choose between cmow and cnmow for the hybrid model to combine with cbow")
+    
+    # CNMOW specific
+    parser.add_argument("--_lambda", type=check_range, default=0, help="Hyperparameter to use for the weighted skip connections")
+    
     return parser
 
 def prepare(params_senteval, samples):
@@ -356,7 +388,8 @@ def prepare(params_senteval, samples):
 
 def _batcher_helper(params, batch):
     sent, _ = get_index_batch(batch, params.vocabulary)
-    sent_cuda = Variable(sent.cuda())
+    #sent_cuda = Variable(sent.cuda())
+    sent_cuda = Variable(sent.to(device))
     sent_cuda = sent_cuda.t()
     params.word2mat.eval() # Deactivate drop-out and such
     embeddings = params.word2mat.forward(sent_cuda).data.cpu().numpy()

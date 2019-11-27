@@ -28,6 +28,8 @@ logging.basicConfig(format='%(asctime)s : %(message)s', level=logging.DEBUG)
 total_time_encoding = 0.
 total_samples_encoded = 0
 
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
 if __name__ == "__main__":
 
     def prepare(params_senteval, samples):
@@ -43,7 +45,7 @@ if __name__ == "__main__":
 
     def _batcher_helper(encoder, vocabulary, batch):
         sent, _ = get_index_batch(batch, vocabulary)
-        sent_cuda = Variable(sent.cuda())
+        sent_cuda = Variable(sent.to(device))
         sent_cuda = sent_cuda.t()
         encoder.eval() # Deactivate drop-out and such
         embeddings = encoder.forward(sent_cuda).data.cpu().numpy()

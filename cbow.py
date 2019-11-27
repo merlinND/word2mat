@@ -20,6 +20,8 @@ from torch.autograd import Variable
 
 sent_tokenizer = nltk.data.load('tokenizers/punkt/english.pickle')
 
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
 def recursive_file_list(path):
     """
     Recursively aggregates all files at the given path, i.e., files in subfolders are also
@@ -165,6 +167,8 @@ class CBOWDataset(Dataset):
         # create chunks
         self.num_texts = num_texts
         self.num_chunks = math.ceil(num_texts / (1.0*self.num_texts_per_chunk))
+        print('num of chunks:', self.num_chunks)
+        print('num of texts:', self.num_texts)
         self._temp_path = temp_path
         if not os.path.exists(self._temp_path):
             os.makedirs(self._temp_path)
@@ -223,6 +227,7 @@ class CBOWDataset(Dataset):
                 cur_chunk_file.close()
                 cur_idx = 0  # index within the chunk
                 cur_chunk_number += 1
+                
                 cur_chunk_file = open(self._get_chunk_file_name(cur_chunk_number), "w")
             else:
                 cur_idx += 1
@@ -318,7 +323,8 @@ def _load_texts(path, num_docs):
     filename_list = recursive_file_list(path)
     
     for filename in filename_list:
-        with open(os.path.realpath(filename), 'r') as f:
+        with open(os.path.realpath(filename), 'r', encoding='utf-8',
+                 errors='ignore') as f:
 
             # change encoding to utf8 to be consistent with other datasets
             #cur_text.decode("ISO-8859-1").encode("utf-8")
@@ -335,7 +341,8 @@ def _generate_texts(path, num_docs):
     filename_list = recursive_file_list(path)
 
     for filename in filename_list:
-        with open(os.path.realpath(filename), "r") as f:
+        with open(os.path.realpath(filename), "r", encoding='utf-8',
+                 errors='ignore') as f:
 
             # change encoding to utf8 to be consistent with other datasets
             # cur_text.decode("ISO-8859-1").encode("utf-8")
@@ -373,7 +380,7 @@ class CBOWNet(nn.Module):
             nwords = torch.multinomial(self.weights, batch_size * self.n_negs, replacement=True).view(batch_size, -1)
         else:
             nwords = FT(batch_size, self.n_negs).uniform_(0, self.vocab_size).long()
-        nwords = Variable(torch.LongTensor(nwords), requires_grad=False).cuda()       
+        nwords = Variable(torch.LongTensor(nwords), requires_grad=False).to(device) #.cuda()       
 
         # lookup the embeddings of output words
         missing_word_vector = self.outputembeddings(missing_word)
