@@ -36,6 +36,7 @@ def run_experiment(params):
     # print parameters passed, and all parameters
     print('\ntogrep : {0}\n'.format(sys.argv[1:]))
     print(params)
+    os.makedirs(params.outputdir, exist_ok=True)
 
     """
     SEED
