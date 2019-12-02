@@ -98,12 +98,12 @@ def run_experiment(params):
         encoder = get_cbow_cmow_hybrid_encoder(n_words, padding_idx = 0,
                                  word_emb_dim = params.word_emb_dim,
                                  initialization_strategy = params.initialization, 
-                                 w2m_type = params.hybrid_cmow, _lambda = params._lambda)
+                                 w2m_type = params.hybrid_cmow, _lambda = params._lambda, cnmow_version = params.cnmow_version)
         output_embedding_size = 2 * params.word_emb_dim
     elif params.w2m_type == "cnmow":
         encoder = get_cnmow_encoder(n_words, padding_idx = 0, 
                                  word_emb_dim = params.word_emb_dim, 
-                                 initialization_strategy = params.initialization, _lambda = params._lambda)
+                                 initialization_strategy = params.initialization, _lambda = params._lambda, cnmow_version=params.cnmow_version)
         output_embedding_size = params.word_emb_dim
 
     # build cbow model
@@ -372,6 +372,7 @@ def get_params_parser():
     
     # CNMOW specific
     parser.add_argument("--_lambda", type=check_range, default=0, help="Hyperparameter to use for the weighted skip connections")
+    parser.add_argument("--cnmow_version", type=int, default=1, help="The version of CNMOW")
     
     return parser
 
