@@ -46,3 +46,43 @@ python3 evaluate_word2mat.py   \
     --output_file=data/evaluation-cnmow-01/cnmow.csv
     #--downstream_tasks SNLI
 ```
+
+
+Tasks
+-----
+
+**Record training times**: runtime, number of sentences / sec, number of epochs before convergence
+
+Train baselines on 10% dataset, and evaluate:
+
+- CBOW
+- CMOW
+- Hybrid
+
+Dimensionality of word embeddings: 784
+Hybrid: 400 + 400.
+
+Train our models:
+
+- Hybrid (CMOW / CBOW) trained with exploration / exploitation: `params.explore_par` values: [1, 2, 10, 50]
+- CNMOW1: ReLU between words, including the first word
+- CNMOW2: ReLU between words, excluding the first word
+- CNMOW3: weigthed skip connections, parameter lambda: [0.25, 0.5, 0.75, 1]
+          0 means only keeping the current word, not adding the previous one; 1 means ignoring the current word.
+- CNMOW4: ReLU nonlinearity (excluding the first word) and weigthed skip connections, parameter lambda: [0.25, 0.5, 0.75, 1]
+- CNMOW5: weigthed skip connection with "learnt lambda"
+          Lambda is predicted by multiplying the current word with a weight matrix, adding a bias, and passing through a sigmoid nonlinearity. 
+          Therefore there is one lambda value per entry of the embedding.
+          /!\ TODO: make sure the weight matrix is being updated during training.
+- CNMOW6: more like an RNN. At every step, multiply the result of the continuous multiplication by some shared weights, add shared bias, pass through ReLU.
+
+Since training on CPU cluster is slow, we do hyperparameter selection on 1% of the data, then train the variant with best results on the 10% dataset to compare with the rest of the models.
+
+
+Then, select the best ones and train again in Hybrid mode (with CBOW).
+
+Selected evaluation tasks:
+
+- Probing tasks (dim 400): WC, B Shift, CoordInv
+- Supervised evaluation: TREC, STS-B, CR
+- Unsupervised evaluation: STS15, STS16
