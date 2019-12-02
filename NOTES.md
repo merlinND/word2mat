@@ -71,13 +71,12 @@ Train our models:
           0 means only keeping the current word, not adding the previous one; 1 means ignoring the current word.
 - CNMOW4: ReLU nonlinearity (excluding the first word) and weigthed skip connections, parameter lambda: [0.25, 0.5, 0.75, 1]
 - CNMOW5: weigthed skip connection with "learnt lambda"
-          Lambda is predicted by multiplying the current word with a weight matrix, adding a bias, and passing through a sigmoid nonlinearity. 
+          Lambda is predicted by multiplying the current word with a weight matrix, adding a bias, and passing through a sigmoid nonlinearity.
           Therefore there is one lambda value per entry of the embedding.
           /!\ TODO: make sure the weight matrix is being updated during training.
 - CNMOW6: more like an RNN. At every step, multiply the result of the continuous multiplication by some shared weights, add shared bias, pass through ReLU.
 
 Since training on CPU cluster is slow, we do hyperparameter selection on 1% of the data, then train the variant with best results on the 10% dataset to compare with the rest of the models.
-
 
 Then, select the best ones and train again in Hybrid mode (with CBOW).
 

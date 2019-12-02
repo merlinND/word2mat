@@ -145,8 +145,7 @@ def _evaluate_downstream_and_probing_tasks(encoder, params, batcher, prepare):
             results = se.eval(task_name)
             return results
 
-        # pool = multiprocess.Pool(1)
-        pool = multiprocess.Pool(PARALLEL_EVALUATION_CORES)
+        pool = multiprocess.Pool(min(len(params.downstram_tasks), PARALLEL_EVALUATION_CORES))
         par_results = pool.map(eval_one, params.downstream_tasks)
         results = dict(zip(params.downstream_tasks, par_results))
 
