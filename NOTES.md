@@ -34,3 +34,15 @@ Train on the reduced dataset:
 ```
 python3 train_cbow.py --w2m_type cnmow --batch_size=1024 --outputdir=data/model-cnmow-01 --optimizer adam,lr=0.0003 --max_words=30000 --n_epochs=1000 --n_negs=20 --validation_frequency=1000 --mode=random --num_samples_per_item=30 --patience 10 --downstream_eval full --outputmodelname mode w2m_type word_emb_dim --validation_fraction=0.0001 --context_size=5 --word_emb_dim 400 --temp_path /tmp --dataset_path=data/webbase_mini --num_workers 2 --output_file data/models/cnmow-01.csv --num_docs 13444268 --stop_criterion train_loss --initialization identity
 ```
+
+Evaluating performance of the newly trained model:
+```
+python3 evaluate_word2mat.py   \
+    --encoders data/model-cnmow-01/mode:random-w2m_type:cnmow-word_emb_dim:400-.encoder   \
+    --word_vocab data/model-cnmow-01/mode:random-w2m_type:cnmow-word_emb_dim:400-.vocab   \
+    --outputdir data/evaluation-cnmow-01   \
+    --outputmodelname cnmow  \
+    --downstream_eval full \
+    --output_file=data/evaluation-cnmow-01/cnmow.csv
+    #--downstream_tasks SNLI
+```
