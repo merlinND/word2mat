@@ -41,7 +41,7 @@ def _get_score_for_name(downstream_results, name):
         return 0
 
 def _run_experiment_and_save(run_experiment, params, batcher, prepare):
-
+    
     encoder, losses = run_experiment(params)
 
     # Save encoder
@@ -224,6 +224,8 @@ def run_and_evaluate(run_experiment, get_params_parser, batcher, prepare):
     parser = get_params_parser()
     parser = _add_common_arguments(parser)
     params = parser.parse_args()
+
+    os.makedirs(params.outputdir, exist_ok=True)
 
     if params.optimization:
         def hyperparameter_optimization_func(opts):
