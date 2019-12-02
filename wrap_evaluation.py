@@ -20,9 +20,12 @@ PATH_SENTEVAL = '../SentEval/'
 PATH_TO_DATA = '../SentEval/data'
 assert os.path.exists(PATH_SENTEVAL) and os.path.exists(PATH_TO_DATA), "Set path to SentEval + data correctly!"
 
-# import senteval
 sys.path.insert(0, PATH_SENTEVAL)
 import senteval
+
+# Set to 1 or 0 to disable usage of parallel evaluation
+PARALLEL_EVALUATION_CORES = os.cpu_count()
+PARALLEL_EVALUATION_ENABLED = PARALLEL_EVALUATION_CORES > 1
 
 def _get_score_for_name(downstream_results, name):
     if name in ["CR", "CoordinationInversion", "SST2", "Length", "OddManOut", "Tense", "SUBJ", "MRPC", "ObjNumber", "SubjNumber", "Depth", "WordContent", "SST5", "SNLI", "MPQA", "BigramShift", "MR", "TREC", "TopConstituents", "SICKEntailment"]:
@@ -41,7 +44,7 @@ def _get_score_for_name(downstream_results, name):
         return 0
 
 def _run_experiment_and_save(run_experiment, params, batcher, prepare):
-    
+
     encoder, losses = run_experiment(params)
 
     # Save encoder
@@ -105,16 +108,19 @@ def _save_embeddings_to_word2vec(encoder, outputmodelname, params):
 def _evaluate_downstream_and_probing_tasks(encoder, params, batcher, prepare):
     # define senteval params
     eval_type = sys.argv[1] if len(sys.argv) > 1 else ""
+    # TODO: do we need this?
+    use_pytorch = not PARALLEL_EVALUATION_ENABLED
+
     if params.downstream_eval == "full":
 
         ## for comparable evaluation (as in literature)
-        params_senteval = {'task_path': PATH_TO_DATA, 'usepytorch': True, 'kfold': 10}
+        params_senteval = {'task_path': PATH_TO_DATA, 'usepytorch': use_pytorch, 'kfold': 10}
         params_senteval['classifier'] = {'nhid': params.nhid, 'optim': 'adam', 'batch_size': 64,
                                          'tenacity': 5, 'epoch_size': 4}
 
     elif params.downstream_eval == "test":
         ## for testing purpose
-        params_senteval = {'task_path': PATH_TO_DATA, 'usepytorch': True, 'kfold': 5}
+        params_senteval = {'task_path': PATH_TO_DATA, 'usepytorch': use_pytorch, 'kfold': 5}
         params_senteval['classifier'] = {'nhid': params.nhid, 'optim': 'rmsprop', 'batch_size': 128,
                                  'tenacity': 3, 'epoch_size': 2}
     else:
@@ -122,12 +128,27 @@ def _evaluate_downstream_and_probing_tasks(encoder, params, batcher, prepare):
                 "but is comparable to literature) or test mode ('test', fast, but not as accurate and comparable).")
 
     # Pass encoder and command line parameters
-    params_senteval['word2mat'] = encoder
+    if not PARALLEL_EVALUATION_ENABLED:
+        params_senteval['word2mat'] = encoder
     params_senteval['cmd_params'] = params
 
     # evaluate
-    se = senteval.engine.SE(params_senteval, batcher, prepare)
-    results = se.eval(params.downstream_tasks)
+    if not PARALLEL_EVALUATION_ENABLED:
+        se = senteval.engine.SE(params_senteval, batcher, prepare)
+        results = se.eval(params.downstream_tasks)
+    else:
+        import multiprocess
+
+        def eval_one(task_name):
+            import torch
+            se = senteval.engine.SE(params_senteval, batcher, prepare)
+            results = se.eval(task_name)
+            return results
+
+        # pool = multiprocess.Pool(1)
+        pool = multiprocess.Pool(PARALLEL_EVALUATION_CORES)
+        par_results = pool.map(eval_one, params.downstream_tasks)
+        results = dict(zip(params.downstream_tasks, par_results))
 
     return results
 

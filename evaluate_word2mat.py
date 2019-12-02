@@ -12,7 +12,7 @@ import numpy as np
 import pandas as pd
 import argparse
 
-from wrap_evaluation import run_and_evaluate, PATH_SENTEVAL, PATH_TO_DATA
+from wrap_evaluation import run_and_evaluate, PATH_SENTEVAL, PATH_TO_DATA, PARALLEL_EVALUATION_ENABLED
 from cbow import get_index_batch
 from torch.autograd import Variable
 
@@ -29,11 +29,16 @@ total_time_encoding = 0.
 total_samples_encoded = 0
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+if PARALLEL_EVALUATION_ENABLED:
+    device = 'cpu'
+    # Workaround (if needed): hide devices
+    # os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
+    # os.environ["CUDA_VISIBLE_DEVICES"] = ""
+    print('Parallel evaluation enabled, setting device = {}'.format(device))
 
 if __name__ == "__main__":
 
     def prepare(params_senteval, samples):
-    
         params = params_senteval["cmd_params"]
 
         # Load vocabulary
@@ -41,7 +46,8 @@ if __name__ == "__main__":
 
         params_senteval['vocabulary'] = vocabulary
         params_senteval['inverse_vocab'] = {vocabulary[w] : w for w in vocabulary}
-        params_senteval['encoders'] = [torch.load(p) for p in params.encoders]
+        params_senteval['encoders'] = [torch.load(p, map_location=device)
+                                       for p in params.encoders]
 
     def _batcher_helper(encoder, vocabulary, batch):
         sent, _ = get_index_batch(batch, vocabulary)
@@ -102,7 +108,7 @@ if __name__ == "__main__":
         return embeddings
 
     def _load_encoder_and_eval(params):
-        encoder_for_wordemb_eval = torch.load(params.encoders[0])
+        encoder_for_wordemb_eval = torch.load(params.encoders[0], map_location=device)
         return (encoder_for_wordemb_eval, [])
     run_and_evaluate(_load_encoder_and_eval, get_params_parser, batcher, prepare)
 
