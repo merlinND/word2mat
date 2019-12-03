@@ -27,7 +27,7 @@ COMMON_ARGS = {
     'num_samples_per_item': 30,
     'patience': 10,
     'downstream_eval': 'none',  # Evaluation run separately from training
-    'outputmodelname': 'mode w2m_type word_emb_dim',
+    'outputmodelname': ['mode', 'w2m_type', 'word_emb_dim'],
     'validation_fraction': 0.0001,
     'context_size': 5,
     'temp_path': '/tmp',
@@ -92,13 +92,19 @@ def main():
                 break
         if found_existing:
             print('-----/ Variant already trained, skipping: {}'.format(variant_name))
-
+            continue
 
         args = dict(_args, **{
             'outputdir': output_dir,
             'output_file': output_file,
         })
-        flags = sum([['--' + k, str(v)] for k, v in args.items()], [])
+        flags = []
+        for k, v in args.items():
+            flags.append('--' + k)
+            if isinstance(v, (list, tuple)):
+                flags += v
+            else:
+                flags.append(str(v))
 
         t0 = time.time()
         subprocess.check_call(['python3', 'train_cbow.py'] + flags)
