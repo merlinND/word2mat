@@ -24,6 +24,18 @@ python3 evaluate_word2mat.py   \
     #--downstream_tasks SNLI
 ```
 
+Evaluating performance of the CBOW model:
+```
+python3 evaluate_word2mat.py   \
+    --encoders data/model-cbow-784-10p/random-w2m_type:cbow-word_emb_dim:784-.encoder   \
+    --word_vocab data/model-cbow-784-10p/random-w2m_type:cbow-word_emb_dim:784-.vocab   \
+    --outputdir data/evaluation   \
+    --outputmodelname cbow-784-10p  \
+    --downstream_eval full \
+    --output_file=data/evaluation-cbow-784-10p/evaluation.csv
+    #--downstream_tasks SNLI
+```
+
 Training the CNMOW model
 ------------------------
 

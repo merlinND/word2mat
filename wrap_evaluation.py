@@ -28,6 +28,9 @@ PARALLEL_EVALUATION_CORES = os.cpu_count()
 PARALLEL_EVALUATION_ENABLED = PARALLEL_EVALUATION_CORES > 1
 
 def _get_score_for_name(downstream_results, name):
+    if downstream_results.get(name, None) is None:
+        return None
+
     if name in ["CR", "CoordinationInversion", "SST2", "Length", "OddManOut", "Tense", "SUBJ", "MRPC", "ObjNumber", "SubjNumber", "Depth", "WordContent", "SST5", "SNLI", "MPQA", "BigramShift", "MR", "TREC", "TopConstituents", "SICKEntailment"]:
         return downstream_results[name]["acc"]
     elif name in ["STS12", "STS13", "STS14", "STS15", "STS16"]:
@@ -140,9 +143,13 @@ def _evaluate_downstream_and_probing_tasks(encoder, params, batcher, prepare):
         import multiprocess
 
         def eval_one(task_name):
-            se = senteval.engine.SE(params_senteval, batcher, prepare)
-            results = se.eval(task_name)
-            return results
+            try:
+                se = senteval.engine.SE(params_senteval, batcher, prepare)
+                results = se.eval(task_name)
+                return results
+            except Exception as e:
+                print('Error! Could not evaluate {}: {}'.format(task_name, e))
+                return None
 
         # Handle relatedness task separately because it uses CUDA
         handle_relatedness = False
