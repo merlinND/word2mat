@@ -24,23 +24,24 @@ class Word2MatEncoder(nn.Module):
         self.n_words = n_words
         self.w2m_type = w2m_type
         self.initialization_strategy = initialization_strategy
-        
+
         # add shared recurrent weights
         if w2m_type == "cnmow":
-            if cnmow_version==5:
+            assert (cnmow_version >= 1) and (cnmow_version <= 6)
+            self.cnmow_version = cnmow_version
+
+            if self.cnmow_version==5:
                 self.weights = torch.randn((self._matrix_dim(), 2*self._matrix_dim()), requires_grad=True)
-            if cnmow_version==6:
+            if self.cnmow_version==6:
                 self.weights = torch.randn((self._matrix_dim(), self._matrix_dim()), requires_grad=True)
             self.bias = torch.zeros((self._matrix_dim(), self._matrix_dim()), requires_grad=True)
-            self.cnmow_version = cnmow_version
-            assert cnmow_version >= 1 and cnmow_version < 7
-            
+
         # check that the word embedding size is a square
         assert word_emb_dim == int(math.sqrt(word_emb_dim)) ** 2
 
         # set up word embedding table
-        self.lookup_table = nn.Embedding(self.n_words + 1, 
-                                      self.word_emb_dim, 
+        self.lookup_table = nn.Embedding(self.n_words + 1,
+                                      self.word_emb_dim,
                                       padding_idx=padding_idx,
                                       sparse = False)
 
@@ -64,7 +65,7 @@ class Word2MatEncoder(nn.Module):
 
             elif self.initialization_strategy == "normalized":
                 ### normalized initialization by (Glorot and Bengio, 2010)
-                init_weights = torch.from_numpy(np.random.uniform(size = (self.n_words, 
+                init_weights = torch.from_numpy(np.random.uniform(size = (self.n_words,
                                                                          self.word_emb_dim),
                                                                  low = -np.sqrt(6 / (2*self.word_emb_dim)),
                                                                  high = +np.sqrt(6 / (2*self.word_emb_dim))
@@ -72,7 +73,7 @@ class Word2MatEncoder(nn.Module):
                                        )
             elif self.initialization_strategy == "normal":
                 ### normalized with N(0,0.1), which failed in study by Yessenalina
-                init_weights = torch.from_numpy(np.random.normal(size = (self.n_words, 
+                init_weights = torch.from_numpy(np.random.normal(size = (self.n_words,
                                                                          self.word_emb_dim),
                                                                  loc = 0.0,
                                                                  scale = 0.1
@@ -84,13 +85,13 @@ class Word2MatEncoder(nn.Module):
         elif self.w2m_type == "cbow":
             init_weights = self._init_normal()
 
-        
+
         ## concatenate and set weights in the lookup table
-        weights = torch.cat([neutral_element, 
+        weights = torch.cat([neutral_element,
                              init_weights],
                              dim=0)
         self.lookup_table.weight = nn.Parameter(weights)
-        
+
         # hyper parameter used for the weighted skip connection in th cnmow model
         self._lambda = _lambda
 
@@ -121,27 +122,27 @@ class Word2MatEncoder(nn.Module):
         for i in range(1, word_matrices.size()[1]):
             cur_emb = torch.bmm(cur_emb, word_matrices[:, i, :])
         return cur_emb
-    
+
     def _continual_multiplication_nn(self, word_matrices):
         cur_emb = word_matrices[:, 0, :]
         for i in range(1, word_matrices.size()[1]):
             # 1- add non-linearity: including the very first word of the sentence
             if self.cnmow_version == 1:
-                cur_emb = torch.bmm(F.relu(cur_emb), word_matrices[:, i, :]) 
-            
+                cur_emb = torch.bmm(F.relu(cur_emb), word_matrices[:, i, :])
+
             # 2- add non-linearity: excluding the very first word of the sentence
             if self.cnmow_version == 2:
                 cur_emb = F.relu(torch.bmm(cur_emb, word_matrices[:, i, :]))
             # Note: adding relu might messe up being close to the identity matrix
-            
+
             # 3- add weighted skip connections
             if self.cnmow_version == 3:
                 cur_emb = self._lambda*cur_emb + (1-self._lambda)*torch.bmm(cur_emb , word_matrices[:, i, :])
-            
+
             # 4- skip connections and non linearity
             if self.cnmow_version == 4:
                 cur_emb = self._lambda*cur_emb + (1-self._lambda)*F.relu(torch.bmm(cur_emb , word_matrices[:, i, :]))
-            
+
             ## TODO: compute lambda as a function of the word embeddings using sigmoid to keep it between 0 and 1
             # 5- skip connections with learned parameter without non-linearity
             if self.cnmow_version == 5:
@@ -149,14 +150,14 @@ class Word2MatEncoder(nn.Module):
                 #pdb.set_trace()
                 cat = torch.cat((cur_emb, word_matrices[:, i, :]),dim=1)
                 _lambda = F.sigmoid(torch.matmul(self.weights,cat) +self.bias)
-                
+
                 cur_emd = _lambda*cur_emb + (1-_lambda)*torch.bmm(cur_emb , word_matrices[:, i, :])
-                                    
-            # 6- add shared weights 
+
+            # 6- add shared weights
             if self.cnmow_version == 6:
                 cur_emb = torch.bmm(cur_emb, word_matrices[:, i, :])
                 cur_emb = torch.matmul(self.weights,cur_emb) + self.bias
-                cur_emb = F.relu(cur_emb) 
+                cur_emb = F.relu(cur_emb)
         return cur_emb
 
     def _flatten_matrix(self, m):
@@ -181,7 +182,7 @@ class Word2MatEncoder(nn.Module):
 
     def _init_normal(self):
         ### normal initialization around 0.
-        init_weights = torch.from_numpy(np.random.normal(size = (self.n_words, 
+        init_weights = torch.from_numpy(np.random.normal(size = (self.n_words,
                                                                  self.word_emb_dim),
                                                          loc = 0.0,
                                                          scale = 0.1
@@ -201,19 +202,19 @@ class HybridEncoder(nn.Module):
 
 
 def get_cmow_encoder(n_words, padding_idx = 0, word_emb_dim = 784, initialization_strategy = "identity"):
-    encoder = Word2MatEncoder(n_words, word_emb_dim = word_emb_dim, 
-                              padding_idx = padding_idx, w2m_type = "cmow", 
+    encoder = Word2MatEncoder(n_words, word_emb_dim = word_emb_dim,
+                              padding_idx = padding_idx, w2m_type = "cmow",
                               initialization_strategy = initialization_strategy)
     return encoder
 
 def get_cnmow_encoder(n_words, padding_idx = 0, word_emb_dim = 784, initialization_strategy = "identity", _lambda = 0, cnmow_version = 1):
-    encoder = Word2MatEncoder(n_words, word_emb_dim = word_emb_dim, 
-                              padding_idx = padding_idx, w2m_type = "cnmow", 
+    encoder = Word2MatEncoder(n_words, word_emb_dim = word_emb_dim,
+                              padding_idx = padding_idx, w2m_type = "cnmow",
                               initialization_strategy = initialization_strategy, _lambda = _lambda, cnmow_version=cnmow_version)
     return encoder
 
 def get_cbow_encoder(n_words, padding_idx = 0, word_emb_dim = 784):
-    encoder = Word2MatEncoder(n_words, word_emb_dim = word_emb_dim, 
+    encoder = Word2MatEncoder(n_words, word_emb_dim = word_emb_dim,
                               padding_idx = padding_idx, w2m_type = "cbow")
     return encoder
 
@@ -224,11 +225,11 @@ def get_cbow_cmow_hybrid_encoder(n_words, padding_idx = 0, word_emb_dim = 400, i
     cbow_encoder = get_cbow_encoder(n_words, padding_idx = padding_idx, word_emb_dim = word_emb_dim)
     if w2m_type == "cmow":
         cmow_encoder = get_cmow_encoder(n_words, padding_idx = word_emb_dim,
-                                   word_emb_dim = word_emb_dim, 
+                                   word_emb_dim = word_emb_dim,
                                    initialization_strategy = initialization_strategy)
     elif w2m_type == "cnmow":
         cmow_encoder = get_cnmow_encoder(n_words, padding_idx = word_emb_dim,
-                                   word_emb_dim = word_emb_dim, 
+                                   word_emb_dim = word_emb_dim,
                                    initialization_strategy = initialization_strategy, _lambda = _lambda, cnmow_version=cnmow_version)
 
     encoder = HybridEncoder(cbow_encoder, cmow_encoder)

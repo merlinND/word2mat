@@ -140,14 +140,29 @@ def _evaluate_downstream_and_probing_tasks(encoder, params, batcher, prepare):
         import multiprocess
 
         def eval_one(task_name):
-            import torch
             se = senteval.engine.SE(params_senteval, batcher, prepare)
             results = se.eval(task_name)
             return results
 
-        pool = multiprocess.Pool(min(len(params.downstram_tasks), PARALLEL_EVALUATION_CORES))
-        par_results = pool.map(eval_one, params.downstream_tasks)
-        results = dict(zip(params.downstream_tasks, par_results))
+        # Handle relatedness task separately because it uses CUDA
+        handle_relatedness = False
+        if 'SICKRelatedness' in params.downstream_tasks:
+            handle_relatedness = True
+            params.downstream_tasks.remove('SICKRelatedness')
+
+        results = {}
+        if len(params.downstream_tasks) >= 1:
+            pool = multiprocess.Pool(min(len(params.downstream_tasks), PARALLEL_EVALUATION_CORES))
+            par_results = pool.map(eval_one, params.downstream_tasks)
+            results = dict(results, **dict(zip(params.downstream_tasks, par_results)))
+
+        if handle_relatedness:
+            try:
+                se = senteval.engine.SE(params_senteval, batcher, prepare)
+                extra_result = se.eval('SICKRelatedness')
+                results['SICKRelatedness'] = extra_result
+            except Exception as e:
+                print('Error! Could not evaluate SICKRelatedness: ' + str(e))
 
     return results
 
