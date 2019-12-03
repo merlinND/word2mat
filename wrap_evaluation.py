@@ -59,7 +59,7 @@ def _run_experiment_and_save(run_experiment, params, batcher, prepare):
 
     scores = {}
     # Compute scores on downstream tasks
-    if params.downstream_eval:
+    if params.downstream_eval and params.downstream_eval != "none":
         downstream_scores = _evaluate_downstream_and_probing_tasks(encoder, params, batcher, prepare)
 
         # from each downstream task, only select scores we care about
@@ -187,7 +187,7 @@ def _add_common_arguments(parser):
     # evaluation
     parser.add_argument("--downstream_eval", type=str, help="Whether to perform 'full'" \
                 "downstream evaluation (slow), 'test' downstream evaluation (fast).",
-                choices = ["test", "full"], required = True)
+                choices = ["test", "full", "none"], required = True)
     parser.add_argument("--downstream_tasks", type=str, nargs = "+",
                          default=['CR', 'MR', 'MPQA', 'SUBJ', 'SST2', 'SST5', 'TREC', 'MRPC', 'SNLI',
                             'SICKEntailment', 'SICKRelatedness', 'STSBenchmark',

@@ -26,7 +26,7 @@ COMMON_ARGS = {
     'mode': 'random',
     'num_samples_per_item': 30,
     'patience': 10,
-    'downstream_eval': 'full',
+    'downstream_eval': 'none',  # Evaluation run separately from training
     'outputmodelname': 'mode w2m_type word_emb_dim',
     'validation_fraction': 0.0001,
     'context_size': 5,
