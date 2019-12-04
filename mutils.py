@@ -15,53 +15,53 @@ import os, csv
 def _update_options(options, **parameters):
     for param_name, param_value in parameters.items():
         print("In automatic optimization trying parameter:", param_name, "with value", param_value)
-        
+
         try:
             setattr(options, param_name, param_value)
         except AttributeError:
             print("Can't find parameter ", param_name, "so we'll not use it.")
             continue
-        
+
     return options
 
 
 def _make_space(options):
-    
+
     space = {}
     inits = {}
     with open(options.optimization_spaces) as optimization_file:
         for line in optimization_file:
-            
+
             # escape comments
             if line.startswith("#"):
                 continue
-            
+
             line = line.strip()
             info = line.split(",")
             param_name = info[0]
-            
+
             if options.optimization == "random":
                 left_bound, right_bound = float(info[1]), float(info[2])
-                
+
                 param_type = info[3]
-                
+
                 try:
                     param_type = getattr(hp, param_type)
                 except AttributeError:
                     print("hyperopt has no attribute", param_type)
                     continue
-                
-                space[param_name] = param_type(param_name, left_bound, right_bound)  
+
+                space[param_name] = param_type(param_name, left_bound, right_bound)
             elif options.optimization == "bayesian":
                 left_bound, right_bound = float(info[1]), float(info[2])
-                
+
                 init_values = list(map(float, info[3:]))
                 num_init_vals = len(init_values)
                 inits[param_name] = init_values
                 space[param_name] = (left_bound, right_bound)
-                
+
             elif options.optimization == "grid":
-                
+
                 param_type = info[1]
                 def get_cast_func(some_string_type):
                     cast_func = None
@@ -76,7 +76,7 @@ def _make_space(options):
                     return cast_func
 
                 cast_func = get_cast_func(param_type)
-                if cast_func is None:                
+                if cast_func is None:
                     if param_type.startswith("list"):
                         # determine type in list
                         list_type = get_cast_func(param_type.split("-")[1])
@@ -86,33 +86,33 @@ def _make_space(options):
                             return [list_type(x) for x in list_string.split(";")]
 
                         cast_func = extract_items
-                    
-                
+
+
                 # all possible values
                 space[param_name] = list(map(cast_func, info[2:]))
-    
+
     if options.optimization == "bayesian":
         return space, inits, num_init_vals
     else:
         return space
-    
+
 def _all_option_combinations(space):
-    
+
     names = [name for name, _ in space.items()]
     values = [values for _, values in space.items()]
-    
+
     val_combinations = product(*values)
-    
+
     combinations = []
     for combi in val_combinations:
         new_param_dict = {}
         for i, val in enumerate(combi):
             new_param_dict[names[i]] = val
-        
+
         combinations.append(new_param_dict)
-    
+
     return combinations
-    
+
 def run_hyperparameter_optimization(options, run_exp):
     """
     This function performs hyperparameter optimization using bayesian optimization, random search, or gridsearch.
@@ -124,7 +124,7 @@ def run_hyperparameter_optimization(options, run_exp):
 
     Parameters:
     ================
-    
+
     argparse :
         The argparse object holding the parameters. In particular, it must contain the following two parameters.
         'optimization' : str, Specifies the optimization method. Either 'bayesian', 'random', or 'grid'.
@@ -135,21 +135,21 @@ def run_hyperparameter_optimization(options, run_exp):
     run_exp : function
         A function that takes the argparse object as input and returns a float that is interpreted as the
         score of the configuration (higher is better).
-    
+
     """
-        
+
     if options.optimization:
-        
+
         def optimized_experiment(**parameters):
-            
+
             current_options = _update_options(options, **parameters)
             result = run_exp(current_options)
-        
+
             # return the f1 score of the previous experiment
             return result
-        
+
         if options.optimization == "bayesian":
-            
+
             gp_params = {"alpha": 1e-5, "kernel" : Matern(nu = 5 / 2)}
             space, init_vals, num_init_vals = _make_space(options)
             bayesian_optimizer = BayesianOptimization(optimized_experiment, space)
@@ -157,21 +157,21 @@ def run_hyperparameter_optimization(options, run_exp):
             bayesian_optimizer.maximize(n_iter=options.optimization_iterations - num_init_vals,
                                         acq = 'ei',
                                         **gp_params)
-            
+
         elif options.optimization == "random":
-            
+
             fmin(lambda parameters : optimized_experiment(**parameters),
                         _make_space(options),
                         algo=rand.suggest,
                         max_evals=options.optimization_iterations,
                         rstate = np.random.RandomState(1337))
-            
+
         elif options.optimization == "grid":
             # perform grid-search by running every possible parameter combination
             combinations = _all_option_combinations(_make_space(options))
             for combi in combinations:
                 optimized_experiment(**combi)
-            
+
     else:
         raise Exception("No hyperparameter method specified!")
 
@@ -195,10 +195,13 @@ def write_to_csv(score, opt):
     f = open(opt.output_file, 'r')
     reader = csv.reader(f, delimiter=";")
     column_names = next(reader)
-    f.close();
+    f.close()
 
     f = open(opt.output_file, 'a')
     for i, key in enumerate(column_names):
+        if key == '' or key is None:
+            continue
+
         if i < len(column_names) - 1:
             if key in opt.__dict__:
                 f.write(str(opt.__dict__[key]) + ";")
@@ -207,7 +210,7 @@ def write_to_csv(score, opt):
         else:
             if key in opt.__dict__:
                 f.write(str(opt.__dict__[key]))
-            else:
+            elif key in score:
                 f.write(str(score[key]))
     f.write('\n')
     f.flush()

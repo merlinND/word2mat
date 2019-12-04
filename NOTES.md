@@ -33,6 +33,21 @@ python3 evaluate_word2mat.py   \
     --outputmodelname cbow-784-10p  \
     --downstream_eval full \
     --output_file=data/evaluation-cbow-784-10p/evaluation.csv
+
+python3 evaluate_word2mat.py   \
+    --encoders data/model-cbow-784-10p/random-w2m_type:cbow-word_emb_dim:784-.encoder   \
+    --word_vocab data/model-cbow-784-10p/random-w2m_type:cbow-word_emb_dim:784-.vocab   \
+    --outputdir data/evaluation-cbow-784-10p   \
+    --outputmodelname cbow-784-10p  \
+    --downstream_eval full \
+    --output_file=data/evaluation-cbow-784-10p/evaluation.csv \
+    --downstream_tasks SICKEntailment STS15 STS16 MRPC Tense SubjNumber BigramShift CoordinationInversion OddManOut ObjNumber TREC Length Depth
+
+    'CR', 'MR', 'MPQA', 'SUBJ', 'SST2', 'SST5', 'TREC', 'MRPC', 'SNLI',
+    'SICKEntailment', 'SICKRelatedness', 'STSBenchmark',
+    'STS12', 'STS13', 'STS14', 'STS15', 'STS16',
+    '', 'WordContent', '', '','BigramShift', 'Tense',
+    'SubjNumber', 'ObjNumber', 'OddManOut', 'CoordinationInversion'
     #--downstream_tasks SNLI
 ```
 
@@ -97,3 +112,26 @@ Selected evaluation tasks:
 - Probing tasks (dim 400): WC, B Shift, CoordInv
 - Supervised evaluation: TREC, STS-B, CR
 - Unsupervised evaluation: STS15, STS16
+
+
+Tasks that seem to finish in a reasonable time:
+- SICKEntailment (SICK entailment)
+- STS15
+- STS16
+- ? (SST Fine-Grained classification)
+- ? (SST Binary classification)
+- MRPC (MRPC)
+- Tense (TENSE)
+- SubjNumber (SUBJNUMBER)
+- BigramShift (BIGRAMSHIFT)
+- CoordinationInversion (COORDINATIONINVERSION)
+- OddManOut (ODDMANOUT)
+- ObjNumber (OBJNUMBER)
+- TREC (TREC)
+- Length (Length)
+- Depth (Depth)
+
+Slow tasks:
+
+- TOPCONSTITUENTS (okay)
+- SNLI

@@ -112,5 +112,8 @@ if __name__ == "__main__":
         return (encoder_for_wordemb_eval, [])
     run_and_evaluate(_load_encoder_and_eval, get_params_parser, batcher, prepare)
 
-    print("Encoding speed: {}/s".format(total_samples_encoded / total_time_encoding))
-
+    if total_time_encoding > 0:
+        print("Encoding speed: {}/s".format(total_samples_encoded / total_time_encoding))
+    else:
+        print("Encoding speed: ?/s (total samples {}, encoding time {})".format(
+            total_samples_encoded, total_time_encoding))
