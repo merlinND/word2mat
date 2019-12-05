@@ -22,6 +22,15 @@ python3 evaluate_word2mat.py   \
     --downstream_eval full \
     --output_file=data/evaluation/hybrid.csv
     #--downstream_tasks SNLI
+
+python3 evaluate_word2mat.py   \
+    --encoders data/model-hybrid-800-10p/mode:random-w2m_type:hybrid-word_emb_dim:400-.encoder   \
+    --word_vocab data/model-hybrid-800-10p/mode:random-w2m_type:hybrid-word_emb_dim:400-.vocab   \
+    --outputdir data/evaluation-hybrid-800-10p   \
+    --outputmodelname hybrid-800-10p  \
+    --downstream_eval full \
+    --output_file=data/evaluation-hybrid-800-10p/evaluation.csv \
+    --downstream_tasks SICKEntailment STS15 STS16 MRPC Tense SubjNumber BigramShift CoordinationInversion OddManOut ObjNumber TREC Length Depth
 ```
 
 Evaluating performance of the CBOW model:
@@ -72,6 +81,33 @@ python3 evaluate_word2mat.py   \
     --downstream_eval full \
     --output_file=data/evaluation-cnmow-01/cnmow.csv
     #--downstream_tasks SNLI
+
+python3 evaluate_word2mat.py   \
+    --encoders data/model-cmow-784-10p/mode:random-w2m_type:cmow-word_emb_dim:784-.encoder   \
+    --word_vocab data/model-cmow-784-10p/mode:random-w2m_type:cmow-word_emb_dim:784-.vocab   \
+    --outputdir data/evaluation-cmow-784-10p   \
+    --outputmodelname cmow-784-10p  \
+    --downstream_eval full \
+    --output_file=data/evaluation-cmow-784-10p/evaluation.csv \
+    --downstream_tasks SICKEntailment STS15 STS16 MRPC Tense SubjNumber BigramShift CoordinationInversion OddManOut ObjNumber TREC Length Depth
+
+python3 evaluate_word2mat.py   \
+    --encoders data/model-cnmow1-784-10p/mode:random-w2m_type:cnmow-word_emb_dim:784-.encoder   \
+    --word_vocab data/model-cnmow1-784-10p/mode:random-w2m_type:cnmow-word_emb_dim:784-.vocab   \
+    --outputdir data/evaluation-cnmow1-784-10p   \
+    --outputmodelname cnmow1-784-10p  \
+    --downstream_eval full \
+    --output_file=data/evaluation-cnmow1-784-10p/evaluation.csv \
+    --downstream_tasks SICKEntailment STS15 STS16 MRPC Tense SubjNumber BigramShift CoordinationInversion OddManOut ObjNumber TREC Length Depth
+
+python3 evaluate_word2mat.py   \
+    --encoders data/model-cnmow2-784-10p/mode:random-w2m_type:cnmow-word_emb_dim:784-.encoder   \
+    --word_vocab data/model-cnmow2-784-10p/mode:random-w2m_type:cnmow-word_emb_dim:784-.vocab   \
+    --outputdir data/evaluation-cnmow2-784-10p   \
+    --outputmodelname cnmow2-784-10p  \
+    --downstream_eval full \
+    --output_file=data/evaluation-cnmow2-784-10p/evaluation.csv \
+    --downstream_tasks SICKEntailment STS15 STS16 MRPC Tense SubjNumber BigramShift CoordinationInversion OddManOut ObjNumber TREC Length Depth
 ```
 
 
@@ -116,10 +152,6 @@ Selected evaluation tasks:
 
 Tasks that seem to finish in a reasonable time:
 - SICKEntailment (SICK entailment)
-- STS15
-- STS16
-- ? (SST Fine-Grained classification)
-- ? (SST Binary classification)
 - MRPC (MRPC)
 - Tense (TENSE)
 - SubjNumber (SUBJNUMBER)
@@ -130,6 +162,10 @@ Tasks that seem to finish in a reasonable time:
 - TREC (TREC)
 - Length (Length)
 - Depth (Depth)
+- STS15
+- STS16
+- ? (SST Fine-Grained classification)
+- ? (SST Binary classification)
 
 Slow tasks:
 

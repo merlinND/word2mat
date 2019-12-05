@@ -12,6 +12,7 @@ from torch import FloatTensor as FT
 from torch import ByteTensor as BT
 
 TINY = 1e-11
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 class Word2MatEncoder(nn.Module):
 
@@ -31,10 +32,10 @@ class Word2MatEncoder(nn.Module):
             self.cnmow_version = cnmow_version
 
             if self.cnmow_version==5:
-                self.weights = torch.randn((self._matrix_dim(), 2*self._matrix_dim()), requires_grad=True)
+                self.weights = torch.randn((self._matrix_dim(), 2*self._matrix_dim()), requires_grad=True).to(device)
             if self.cnmow_version==6:
-                self.weights = torch.randn((self._matrix_dim(), self._matrix_dim()), requires_grad=True)
-            self.bias = torch.zeros((self._matrix_dim(), self._matrix_dim()), requires_grad=True)
+                self.weights = torch.randn((self._matrix_dim(), self._matrix_dim()), requires_grad=True).to(device)
+            self.bias = torch.zeros((self._matrix_dim(), self._matrix_dim()), requires_grad=True).to(device)
 
         # check that the word embedding size is a square
         assert word_emb_dim == int(math.sqrt(word_emb_dim)) ** 2
@@ -149,7 +150,7 @@ class Word2MatEncoder(nn.Module):
                 #import pdb
                 #pdb.set_trace()
                 cat = torch.cat((cur_emb, word_matrices[:, i, :]),dim=1)
-                _lambda = F.sigmoid(torch.matmul(self.weights,cat) +self.bias)
+                _lambda = torch.sigmoid(torch.matmul(self.weights,cat) +self.bias)
 
                 cur_emd = _lambda*cur_emb + (1-_lambda)*torch.bmm(cur_emb , word_matrices[:, i, :])
 
