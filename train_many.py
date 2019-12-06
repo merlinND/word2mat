@@ -87,6 +87,19 @@ VARIANTS = {
         'w2m_type': 'cnmow',
         'word_emb_dim': 784,
         'cnmow_version': 601,
+
+
+    'cnmow5-hybrid-800-10p': dict(COMMON_ARGS_10P, **{
+        'w2m_type': 'hybrid',
+        'hybrid_cmow': 'cnmow',
+        'word_emb_dim': 400,
+        'cnmow_version': 5,
+    }),
+    'cnmow6-hybrid-800-10p': dict(COMMON_ARGS_10P, **{
+        'w2m_type': 'hybrid',
+        'hybrid_cmow': 'cnmow',
+        'word_emb_dim': 400,
+        'cnmow_version': 5,
     }),
 }
 

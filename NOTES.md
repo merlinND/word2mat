@@ -162,6 +162,8 @@ Train our models:
 - CNMOW7: same as CNMOW4 but with non-linearity including first word
 - CNMOW8: same as CNMOW5 but with non-linearity including the first word
 - CNMOW9: same as CNMOW5 but with bmm instead of cat
+- Hybrid (CNMOW5 / CBOW)
+- Hybrid (CNMOW6 / CBOW)
 
 Since training on CPU cluster is slow, we do hyperparameter selection on 1% of the data, then train the variant with best results on the 10% dataset to compare with the rest of the models.
 
