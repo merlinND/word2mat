@@ -58,10 +58,20 @@ VARIANTS = {
         'word_emb_dim': 784,
         'cnmow_version': 1,
     }),
+    'cnmow1b-784-10p': dict(COMMON_ARGS_10P, **{
+        'w2m_type': 'cnmow',
+        'word_emb_dim': 784,
+        'cnmow_version': 101,
+    }),
     'cnmow2-784-10p': dict(COMMON_ARGS_10P, **{
         'w2m_type': 'cnmow',
         'word_emb_dim': 784,
         'cnmow_version': 2,
+    }),
+    'cnmow2b-784-10p': dict(COMMON_ARGS_10P, **{
+        'w2m_type': 'cnmow',
+        'word_emb_dim': 784,
+        'cnmow_version': 201,
     }),
     'cnmow5-784-10p': dict(COMMON_ARGS_10P, **{
         'w2m_type': 'cnmow',
@@ -72,6 +82,11 @@ VARIANTS = {
         'w2m_type': 'cnmow',
         'word_emb_dim': 784,
         'cnmow_version': 6,
+    }),
+    'cnmow6b-784-10p': dict(COMMON_ARGS_10P, **{
+        'w2m_type': 'cnmow',
+        'word_emb_dim': 784,
+        'cnmow_version': 601,
     }),
 }
 
