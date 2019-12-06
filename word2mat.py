@@ -28,12 +28,12 @@ class Word2MatEncoder(nn.Module):
 
         # add shared recurrent weights
         if w2m_type == "cnmow":
-            assert (cnmow_version >= 1) and (cnmow_version <= 6)
+            assert (cnmow_version >= 1) and (cnmow_version <= 9)
             self.cnmow_version = cnmow_version
 
-            if self.cnmow_version==5:
+            if self.cnmow_version==5 or self.cnmow_version==8:
                 self.weights = torch.randn((self._matrix_dim(), 2*self._matrix_dim()), requires_grad=True).to(device)
-            if self.cnmow_version==6:
+            if self.cnmow_version==6 or self.cnmow_version==9:
                 self.weights = torch.randn((self._matrix_dim(), self._matrix_dim()), requires_grad=True).to(device)
             self.bias = torch.zeros((self._matrix_dim(), self._matrix_dim()), requires_grad=True).to(device)
 
@@ -91,6 +91,20 @@ class Word2MatEncoder(nn.Module):
         weights = torch.cat([neutral_element,
                              init_weights],
                              dim=0)
+        
+        if w2m_type == "cnmow":
+            if self.cnmow_version==5 or self.cnmow_version==6 or self.cnmow_version==8 or self.cnmow_version==9:
+                bias = self.bias.view(1, self.word_emb_dim)
+                if self.cnmow_version==5 or self.cnmow_version==8:
+                    weight = self.weights.view(2, self.word_emb_dim)
+                else:
+                    weight = self.weights.view(1, self.word_emb_dim)
+                weights = torch.cat([neutral_element,
+                                     init_weights,
+                                     bias,
+                                     weight],
+                                    dim=0)
+                
         self.lookup_table.weight = nn.Parameter(weights)
 
         # hyper parameter used for the weighted skip connection in th cnmow model
@@ -147,18 +161,38 @@ class Word2MatEncoder(nn.Module):
             ## TODO: compute lambda as a function of the word embeddings using sigmoid to keep it between 0 and 1
             # 5- skip connections with learned parameter without non-linearity
             if self.cnmow_version == 5:
+                
+                temp = torch.cat((cur_emb, word_matrices[:, i, :]),dim=1)
                 #import pdb
                 #pdb.set_trace()
-                cat = torch.cat((cur_emb, word_matrices[:, i, :]),dim=1)
-                _lambda = torch.sigmoid(torch.matmul(self.weights,cat) +self.bias)
-
+                _lambda = torch.sigmoid(torch.matmul(self.weights,temp)+self.bias)
+                
                 cur_emd = _lambda*cur_emb + (1-_lambda)*torch.bmm(cur_emb , word_matrices[:, i, :])
-
+                  
             # 6- add shared weights
             if self.cnmow_version == 6:
                 cur_emb = torch.bmm(cur_emb, word_matrices[:, i, :])
                 cur_emb = torch.matmul(self.weights,cur_emb) + self.bias
                 cur_emb = F.relu(cur_emb)
+                
+            # 7: 4 + non-linearity including first word
+            if self.cnmow_version == 7:
+                cur_emb = F.relu(cur_emb)
+                cur_emb = self._lambda*cur_emb + (1-self._lambda)*torch.bmm(cur_emb , word_matrices[:, i, :])
+                
+            # 8- 5 + non-linearity including the first word
+            if self.cnmow_version == 8:
+                temp = torch.cat((cur_emb, word_matrices[:, i, :]),dim=1)
+                _lambda = torch.sigmoid(torch.matmul(self.weights,temp) +self.bias)
+                cur_emd = _lambda*F.relu(cur_emb) + (1-_lambda)*torch.bmm(F.relu(cur_emb) , word_matrices[:, i, :])
+                
+            # 9- 5 bmm instead of cat
+            if self.cnmow_version == 9:
+                #import pdb
+                #pdb.set_trace()
+                temp = torch.bmm(cur_emb, word_matrices[:, i, :])
+                _lambda = torch.sigmoid(torch.matmul(self.weights,temp) +self.bias)
+                cur_emd = _lambda*cur_emb + (1-_lambda)*torch.bmm(cur_emb , word_matrices[:, i, :])
         return cur_emb
 
     def _flatten_matrix(self, m):
