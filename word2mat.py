@@ -85,6 +85,8 @@ class Word2MatEncoder(nn.Module):
         elif self.w2m_type == "cbow":
             init_weights = self._init_normal()
 
+        neutral_element = neutral_element.to(device)
+        init_weights = init_weights.to(device)
 
         ## concatenate and set weights in the lookup table
         weights = torch.cat([neutral_element,
