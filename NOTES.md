@@ -101,12 +101,30 @@ python3 evaluate_word2mat.py   \
     --downstream_tasks SICKEntailment STS15 STS16 MRPC Tense SubjNumber BigramShift CoordinationInversion OddManOut ObjNumber TREC Length Depth
 
 python3 evaluate_word2mat.py   \
+    --encoders data/model-cnmow1b-784-10p/mode:random-w2m_type:cnmow-word_emb_dim:784-.encoder   \
+    --word_vocab data/model-cnmow1b-784-10p/mode:random-w2m_type:cnmow-word_emb_dim:784-.vocab   \
+    --outputdir data/evaluation-cnmow1b-784-10p   \
+    --outputmodelname cnmow1b-784-10p  \
+    --downstream_eval full \
+    --output_file=data/evaluation-cnmow1b-784-10p/evaluation.csv \
+    --downstream_tasks SICKEntailment STS15 STS16 MRPC Tense SubjNumber BigramShift CoordinationInversion OddManOut ObjNumber TREC Length Depth
+
+python3 evaluate_word2mat.py   \
     --encoders data/model-cnmow2-784-10p/mode:random-w2m_type:cnmow-word_emb_dim:784-.encoder   \
     --word_vocab data/model-cnmow2-784-10p/mode:random-w2m_type:cnmow-word_emb_dim:784-.vocab   \
     --outputdir data/evaluation-cnmow2-784-10p   \
     --outputmodelname cnmow2-784-10p  \
     --downstream_eval full \
     --output_file=data/evaluation-cnmow2-784-10p/evaluation.csv \
+    --downstream_tasks SICKEntailment STS15 STS16 MRPC Tense SubjNumber BigramShift CoordinationInversion OddManOut ObjNumber TREC Length Depth
+
+python3 evaluate_word2mat.py   \
+    --encoders data/model-cnmow2b-784-10p/mode:random-w2m_type:cnmow-word_emb_dim:784-.encoder   \
+    --word_vocab data/model-cnmow2b-784-10p/mode:random-w2m_type:cnmow-word_emb_dim:784-.vocab   \
+    --outputdir data/evaluation-cnmow2b-784-10p   \
+    --outputmodelname cnmow2b-784-10p  \
+    --downstream_eval full \
+    --output_file=data/evaluation-cnmow2b-784-10p/evaluation.csv \
     --downstream_tasks SICKEntailment STS15 STS16 MRPC Tense SubjNumber BigramShift CoordinationInversion OddManOut ObjNumber TREC Length Depth
 
 python3 evaluate_word2mat.py   \
@@ -125,6 +143,60 @@ python3 evaluate_word2mat.py   \
     --outputmodelname cnmow6-784-10p  \
     --downstream_eval full \
     --output_file=data/evaluation-cnmow6-784-10p/evaluation.csv \
+    --downstream_tasks SICKEntailment STS15 STS16 MRPC Tense SubjNumber BigramShift CoordinationInversion OddManOut ObjNumber TREC Length Depth
+
+python3 evaluate_word2mat.py   \
+    --encoders data/model-cnmow6b-784-10p/mode:random-w2m_type:cnmow-word_emb_dim:784-.encoder   \
+    --word_vocab data/model-cnmow6b-784-10p/mode:random-w2m_type:cnmow-word_emb_dim:784-.vocab   \
+    --outputdir data/evaluation-cnmow6b-784-10p   \
+    --outputmodelname cnmow6b-784-10p  \
+    --downstream_eval full \
+    --output_file=data/evaluation-cnmow6b-784-10p/evaluation.csv \
+    --downstream_tasks SICKEntailment STS15 STS16 MRPC Tense SubjNumber BigramShift CoordinationInversion OddManOut ObjNumber TREC Length Depth
+
+python3 evaluate_word2mat.py   \
+    --encoders data/model-cnmow5-hybrid-800-10p/mode:random-w2m_type:hybrid-word_emb_dim:400-.encoder   \
+    --word_vocab data/model-cnmow5-hybrid-800-10p/mode:random-w2m_type:hybrid-word_emb_dim:400-.vocab   \
+    --outputdir data/evaluation-cnmow5-hybrid-800-10p   \
+    --outputmodelname cnmow5-hybrid-800-10p  \
+    --downstream_eval full \
+    --output_file=data/evaluation-cnmow5-hybrid-800-10p/evaluation.csv \
+    --downstream_tasks SICKEntailment STS15 STS16 MRPC Tense SubjNumber BigramShift CoordinationInversion OddManOut ObjNumber TREC Length Depth
+
+python3 evaluate_word2mat.py   \
+    --encoders data/model-cnmow6-hybrid-800-10p/mode:random-w2m_type:hybrid-word_emb_dim:400-.encoder   \
+    --word_vocab data/model-cnmow6-hybrid-800-10p/mode:random-w2m_type:hybrid-word_emb_dim:400-.vocab   \
+    --outputdir data/evaluation-cnmow6-hybrid-800-10p   \
+    --outputmodelname cnmow6-hybrid-800-10p  \
+    --downstream_eval full \
+    --output_file=data/evaluation-cnmow6-hybrid-800-10p/evaluation.csv \
+    --downstream_tasks SICKEntailment STS15 STS16 MRPC Tense SubjNumber BigramShift CoordinationInversion OddManOut ObjNumber TREC Length Depth
+
+python3 evaluate_word2mat.py   \
+    --encoders data/model-cnmow7-784-10p/mode:random-w2m_type:cnmow-word_emb_dim:784-.encoder   \
+    --word_vocab data/model-cnmow7-784-10p/mode:random-w2m_type:cnmow-word_emb_dim:784-.vocab   \
+    --outputdir data/evaluation-cnmow7-784-10p   \
+    --outputmodelname cnmow7-784-10p  \
+    --downstream_eval full \
+    --output_file=data/evaluation-cnmow7-784-10p/evaluation.csv \
+    --downstream_tasks SICKEntailment STS15 STS16 MRPC Tense SubjNumber BigramShift CoordinationInversion OddManOut ObjNumber TREC Length Depth
+
+python3 evaluate_word2mat.py   \
+    --encoders data/model-cnmow8-784-10p/mode:random-w2m_type:cnmow-word_emb_dim:784-.encoder   \
+    --word_vocab data/model-cnmow8-784-10p/mode:random-w2m_type:cnmow-word_emb_dim:784-.vocab   \
+    --outputdir data/evaluation-cnmow8-784-10p   \
+    --outputmodelname cnmow8-784-10p  \
+    --downstream_eval full \
+    --output_file=data/evaluation-cnmow8-784-10p/evaluation.csv \
+    --downstream_tasks SICKEntailment STS15 STS16 MRPC Tense SubjNumber BigramShift CoordinationInversion OddManOut ObjNumber TREC Length Depth
+
+python3 evaluate_word2mat.py   \
+    --encoders data/model-cnmow9-784-10p/mode:random-w2m_type:cnmow-word_emb_dim:784-.encoder   \
+    --word_vocab data/model-cnmow9-784-10p/mode:random-w2m_type:cnmow-word_emb_dim:784-.vocab   \
+    --outputdir data/evaluation-cnmow9-784-10p   \
+    --outputmodelname cnmow9-784-10p  \
+    --downstream_eval full \
+    --output_file=data/evaluation-cnmow9-784-10p/evaluation.csv \
     --downstream_tasks SICKEntailment STS15 STS16 MRPC Tense SubjNumber BigramShift CoordinationInversion OddManOut ObjNumber TREC Length Depth
 ```
 
