@@ -87,6 +87,7 @@ VARIANTS = {
         'w2m_type': 'cnmow',
         'word_emb_dim': 784,
         'cnmow_version': 601,
+    }),
 
 
     'cnmow5-hybrid-800-10p': dict(COMMON_ARGS_10P, **{
@@ -100,6 +101,23 @@ VARIANTS = {
         'hybrid_cmow': 'cnmow',
         'word_emb_dim': 400,
         'cnmow_version': 5,
+    }),
+
+    # This actually requires hyperparameter tuning
+    #'cnmow7-784-10p': dict(COMMON_ARGS_10P, **{
+    #    'w2m_type': 'cnmow',
+    #    'word_emb_dim': 784,
+    #    'cnmow_version': 7,
+    #}),
+    'cnmow8-784-10p': dict(COMMON_ARGS_10P, **{
+        'w2m_type': 'cnmow',
+        'word_emb_dim': 784,
+        'cnmow_version': 8,
+    }),
+    'cnmow9-784-10p': dict(COMMON_ARGS_10P, **{
+        'w2m_type': 'cnmow',
+        'word_emb_dim': 784,
+        'cnmow_version': 9,
     }),
 }
 

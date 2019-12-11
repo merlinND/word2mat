@@ -30,9 +30,9 @@ class Word2MatEncoder(nn.Module):
         if w2m_type == "cnmow":
             self.cnmow_version = cnmow_version
 
-            if self.cnmow_version==5 or self.cnmow_version==8:
+            if self.cnmow_version==5 or self.cnmow_version==501 or self.cnmow_version==8 or self.cnmow_version==801:
                 self.weights = torch.randn((self._matrix_dim(), 2*self._matrix_dim()), requires_grad=True).to(device)
-            if self.cnmow_version==6 or self.cnmow_version==9:
+            if self.cnmow_version==6 or self.cnmow_version==601 or self.cnmow_version==9 or self.cnmow_version==901:
                 self.weights = torch.randn((self._matrix_dim(), self._matrix_dim()), requires_grad=True).to(device)
             self.bias = torch.zeros((self._matrix_dim(), self._matrix_dim()), requires_grad=True).to(device)
 
