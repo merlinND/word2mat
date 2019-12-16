@@ -28,7 +28,7 @@ HYBRID_CMD_TEMPLATE = """python3 evaluate_word2mat.py   \
 
 def main():
     assert os.path.isdir(DATA_ROOT)
- 
+
     evals = []
     models = []
     for f in os.listdir(DATA_ROOT):
@@ -38,7 +38,7 @@ def main():
             evals.append(f[len(EVAL_PREFIX):])
 
     missing_evals = set(models) - set(evals)
-    
+
     for name in missing_evals:
         template = CNMOW_CMD_TEMPLATE
         if 'hybrid' in name:
@@ -48,9 +48,9 @@ def main():
         cmd = [c for c in cmd if c]
 
         t0 = time.time()
-        subprocess.check_call()
+        subprocess.check_call(cmd)
         elapsed = time.time() - t0
-    
+
         print('----- completed variant: {}, took {:.2f}s'.format(name, elapsed))
 
 
