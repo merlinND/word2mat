@@ -94,6 +94,7 @@ VARIANTS = {
         'w2m_type': 'cnmow',
         'word_emb_dim': 784,
         'cnmow_version': 6,
+        'seed': 42,
     }),
     'cnmow6b-784-10p': dict(COMMON_ARGS_10P, **{
         'w2m_type': 'cnmow',
