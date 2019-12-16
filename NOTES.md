@@ -287,3 +287,24 @@ Slow tasks:
 
 - TOPCONSTITUENTS (okay)
 - SNLI
+
+
+
+Probing tasks:
+- Tense
+- SubjNumber
+- BigramShift
+- CoordinationInversion
+- ObjNumber
+- Length
+- Depth
+- OddManOut
+
+
+Downstream tasks:
+- STS15
+- STS16
+- SICKEntailment
+- MRPC
+- TREC
+

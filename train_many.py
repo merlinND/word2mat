@@ -53,6 +53,11 @@ VARIANTS = {
         'w2m_type': 'hybrid',
         'word_emb_dim': 400,
     }),
+    'hybrid-alpha16-800-10p': dict(COMMON_ARGS_10P, **{
+        'w2m_type': 'hybrid',
+        'word_emb_dim': 400,
+        'explore_par': 16,
+    }),
     'cnmow1-784-10p': dict(COMMON_ARGS_10P, **{
         'w2m_type': 'cnmow',
         'word_emb_dim': 784,
