@@ -28,12 +28,11 @@ class Word2MatEncoder(nn.Module):
 
         # add shared recurrent weights
         if w2m_type == "cnmow":
-            assert (cnmow_version >= 1) and (cnmow_version <= 9)
             self.cnmow_version = cnmow_version
 
-            if self.cnmow_version==5 or self.cnmow_version==8:
+            if self.cnmow_version==5 or self.cnmow_version==501 or self.cnmow_version==8 or self.cnmow_version==801:
                 self.weights = torch.randn((self._matrix_dim(), 2*self._matrix_dim()), requires_grad=True).to(device)
-            if self.cnmow_version==6 or self.cnmow_version==9:
+            if self.cnmow_version==6 or self.cnmow_version==601 or self.cnmow_version==9 or self.cnmow_version==901:
                 self.weights = torch.randn((self._matrix_dim(), self._matrix_dim()), requires_grad=True).to(device)
             self.bias = torch.zeros((self._matrix_dim(), self._matrix_dim()), requires_grad=True).to(device)
 
@@ -86,6 +85,8 @@ class Word2MatEncoder(nn.Module):
         elif self.w2m_type == "cbow":
             init_weights = self._init_normal()
 
+        neutral_element = neutral_element.to(device)
+        init_weights = init_weights.to(device)
 
         ## concatenate and set weights in the lookup table
         weights = torch.cat([neutral_element,
@@ -140,27 +141,34 @@ class Word2MatEncoder(nn.Module):
 
     def _continual_multiplication_nn(self, word_matrices):
         cur_emb = word_matrices[:, 0, :]
+
         for i in range(1, word_matrices.size()[1]):
-            # 1- add non-linearity: including the very first word of the sentence
+            # 1: add non-linearity: including the very first word of the sentence
             if self.cnmow_version == 1:
                 cur_emb = torch.bmm(F.relu(cur_emb), word_matrices[:, i, :])
+            # 1b: same as 1, with sigmoid nonlinearity
+            elif self.cnmow_version == 101:
+                cur_emb = torch.bmm(torch.sigmoid(cur_emb), word_matrices[:, i, :])
 
-            # 2- add non-linearity: excluding the very first word of the sentence
-            if self.cnmow_version == 2:
+            # 2: add non-linearity: excluding the very first word of the sentence
+            # Note: adding relu might mess up being close to the identity matrix
+            elif self.cnmow_version == 2:
                 cur_emb = F.relu(torch.bmm(cur_emb, word_matrices[:, i, :]))
-            # Note: adding relu might messe up being close to the identity matrix
+            # 2b: same as 2, but with sigmoid nonlinearity
+            elif self.cnmow_version == 201:
+                cur_emb = torch.sigmoid(torch.bmm(cur_emb, word_matrices[:, i, :]))
 
-            # 3- add weighted skip connections
-            if self.cnmow_version == 3:
+            # 3: add weighted skip connections
+            elif self.cnmow_version == 3:
                 cur_emb = self._lambda*cur_emb + (1-self._lambda)*torch.bmm(cur_emb , word_matrices[:, i, :])
 
-            # 4- skip connections and non linearity
-            if self.cnmow_version == 4:
+            # 4: skip connections and non linearity
+            elif self.cnmow_version == 4:
                 cur_emb = self._lambda*cur_emb + (1-self._lambda)*F.relu(torch.bmm(cur_emb , word_matrices[:, i, :]))
 
             ## TODO: compute lambda as a function of the word embeddings using sigmoid to keep it between 0 and 1
-            # 5- skip connections with learned parameter without non-linearity
-            if self.cnmow_version == 5:
+            # 5: skip connections with learned parameter without non-linearity
+            elif self.cnmow_version == 5:
                 
                 temp = torch.cat((cur_emb, word_matrices[:, i, :]),dim=1)
                 #import pdb
@@ -169,30 +177,36 @@ class Word2MatEncoder(nn.Module):
                 
                 cur_emd = _lambda*cur_emb + (1-_lambda)*torch.bmm(cur_emb , word_matrices[:, i, :])
                   
-            # 6- add shared weights
-            if self.cnmow_version == 6:
+            # 6: add shared weights
+            elif self.cnmow_version == 6:
                 cur_emb = torch.bmm(cur_emb, word_matrices[:, i, :])
                 cur_emb = torch.matmul(self.weights,cur_emb) + self.bias
                 cur_emb = F.relu(cur_emb)
+            # 6b: same as 6, but with sigmoid nonlinearity
+            elif self.cnmow_version == 601:
+                cur_emb = torch.bmm(cur_emb, word_matrices[:, i, :])
+                cur_emb = torch.matmul(self.weights,cur_emb) + self.bias
+                cur_emb = torch.sigmoid(cur_emb)
                 
             # 7: 4 + non-linearity including first word
-            if self.cnmow_version == 7:
+            elif self.cnmow_version == 7:
                 cur_emb = F.relu(cur_emb)
                 cur_emb = self._lambda*cur_emb + (1-self._lambda)*torch.bmm(cur_emb , word_matrices[:, i, :])
                 
-            # 8- 5 + non-linearity including the first word
-            if self.cnmow_version == 8:
+            # 8: 5 + non-linearity including the first word
+            elif self.cnmow_version == 8:
                 temp = torch.cat((cur_emb, word_matrices[:, i, :]),dim=1)
                 _lambda = torch.sigmoid(torch.matmul(self.weights,temp) +self.bias)
                 cur_emd = _lambda*F.relu(cur_emb) + (1-_lambda)*torch.bmm(F.relu(cur_emb) , word_matrices[:, i, :])
                 
-            # 9- 5 bmm instead of cat
-            if self.cnmow_version == 9:
-                #import pdb
-                #pdb.set_trace()
+            # 9: 5 + bmm instead of cat
+            elif self.cnmow_version == 9:
                 temp = torch.bmm(cur_emb, word_matrices[:, i, :])
                 _lambda = torch.sigmoid(torch.matmul(self.weights,temp) +self.bias)
                 cur_emd = _lambda*cur_emb + (1-_lambda)*torch.bmm(cur_emb , word_matrices[:, i, :])
+
+            else:
+                raise RuntimeError("Unsupported CNMOW version: {}".format(self.cnmow_version))
         return cur_emb
 
     def _flatten_matrix(self, m):
