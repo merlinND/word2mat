@@ -34,7 +34,7 @@ class Word2MatEncoder(nn.Module):
                 self.sh_weights = nn.Parameter(torch.randn((self._matrix_dim(), 2*self._matrix_dim()), device=device))
                 self.sh_weights.requires_grad = True
             if self.cnmow_version==6 or self.cnmow_version==601 or self.cnmow_version==9 or self.cnmow_version==901:
-                self.weights = nn.Parameter(torch.randn((self._matrix_dim(), self._matrix_dim()), device=device))
+                self.sh_weights = nn.Parameter(torch.randn((self._matrix_dim(), self._matrix_dim()), device=device))
                 self.sh_weights.requires_grad = True
             self.sh_bias = torch.zeros((self._matrix_dim(), self._matrix_dim()), device=device)
             self.sh_bias.requires_grad = True
