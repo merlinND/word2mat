@@ -31,12 +31,12 @@ class Word2MatEncoder(nn.Module):
             self.cnmow_version = cnmow_version
 
             if self.cnmow_version==5 or self.cnmow_version==501 or self.cnmow_version==8 or self.cnmow_version==801:
-                self.sh_weights = nn.Parameter(torch.randn((self._matrix_dim(), 2*self._matrix_dim())))
+                self.sh_weights = nn.Parameter(torch.randn((self._matrix_dim(), 2*self._matrix_dim()), device=device))
                 self.sh_weights.requires_grad = True
             if self.cnmow_version==6 or self.cnmow_version==601 or self.cnmow_version==9 or self.cnmow_version==901:
-                self.weights = nn.Parameter(torch.randn((self._matrix_dim(), self._matrix_dim())))
+                self.weights = nn.Parameter(torch.randn((self._matrix_dim(), self._matrix_dim()), device=device))
                 self.sh_weights.requires_grad = True
-            self.sh_bias = torch.zeros((self._matrix_dim(), self._matrix_dim()))
+            self.sh_bias = torch.zeros((self._matrix_dim(), self._matrix_dim()), device=device)
             self.sh_bias.requires_grad = True
 
         # check that the word embedding size is a square
@@ -174,10 +174,9 @@ class Word2MatEncoder(nn.Module):
             elif self.cnmow_version == 5:
                 
                 temp = torch.cat((cur_emb, word_matrices[:, i, :]),dim=1)
-                #import pdb
-                #pdb.set_trace()
                 _lambda = torch.sigmoid(torch.matmul(self.sh_weights,temp)+self.sh_bias)
-                
+                # Print to make sure that values are changing (i.e. weights are being trained)
+                # print(self.sh_weights[0][0])
                 cur_emb = _lambda*cur_emb + (1-_lambda)*torch.bmm(cur_emb , word_matrices[:, i, :])
                   
             # 6: add shared weights
