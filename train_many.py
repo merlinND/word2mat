@@ -101,25 +101,6 @@ VARIANTS = {
         'cnmow_version': 6,
         'seed': 42,
     }),
-    'cnmow6b-784-10p': dict(COMMON_ARGS_10P, **{
-        'w2m_type': 'cnmow',
-        'word_emb_dim': 784,
-        'cnmow_version': 601,
-    }),
-
-
-    'cnmow5-hybrid-800-10p': dict(COMMON_ARGS_10P, **{
-        'w2m_type': 'hybrid',
-        'hybrid_cmow': 'cnmow',
-        'word_emb_dim': 400,
-        'cnmow_version': 5,
-    }),
-    'cnmow6-hybrid-800-10p': dict(COMMON_ARGS_10P, **{
-        'w2m_type': 'hybrid',
-        'hybrid_cmow': 'cnmow',
-        'word_emb_dim': 400,
-        'cnmow_version': 5,
-    }),
 
     'cnmow7-784-10p': dict(COMMON_ARGS_10P, **{
        'w2m_type': 'cnmow',
@@ -137,8 +118,7 @@ VARIANTS = {
         'word_emb_dim': 784,
         'cnmow_version': 9,
     }),
-
-
+    
     'cnmow3-hybrid-800-10p': dict(COMMON_ARGS_10P, **{
         'w2m_type': 'hybrid',
         'hybrid_cmow': 'cnmow',
@@ -152,6 +132,18 @@ VARIANTS = {
         'word_emb_dim': 400,
         'cnmow_version': 4,
         '_lambda': 0.5,
+    }),
+    'cnmow5-hybrid-800-10p': dict(COMMON_ARGS_10P, **{
+        'w2m_type': 'hybrid',
+        'hybrid_cmow': 'cnmow',
+        'word_emb_dim': 400,
+        'cnmow_version': 5,
+    }),
+    'cnmow6-hybrid-800-10p': dict(COMMON_ARGS_10P, **{
+        'w2m_type': 'hybrid',
+        'hybrid_cmow': 'cnmow',
+        'word_emb_dim': 400,
+        'cnmow_version': 5,
     }),
     'cnmow7-hybrid-800-10p': dict(COMMON_ARGS_10P, **{
         'w2m_type': 'hybrid',
@@ -173,6 +165,11 @@ VARIANTS = {
         'word_emb_dim': 400,
         'cnmow_version': 9,
         '_lambda': 0.5,
+    }),
+    'cnmow6b-784-10p': dict(COMMON_ARGS_10P, **{
+        'w2m_type': 'cnmow',
+        'word_emb_dim': 784,
+        'cnmow_version': 601,
     }),
 }
 
