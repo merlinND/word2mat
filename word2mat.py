@@ -31,10 +31,13 @@ class Word2MatEncoder(nn.Module):
             self.cnmow_version = cnmow_version
 
             if self.cnmow_version==5 or self.cnmow_version==501 or self.cnmow_version==8 or self.cnmow_version==801:
-                self.weights = torch.randn((self._matrix_dim(), 2*self._matrix_dim()), requires_grad=True).to(device)
+                self.sh_weights = nn.Parameter(torch.randn((self._matrix_dim(), 2*self._matrix_dim())))
+                self.sh_weights.requires_grad = True
             if self.cnmow_version==6 or self.cnmow_version==601 or self.cnmow_version==9 or self.cnmow_version==901:
-                self.weights = torch.randn((self._matrix_dim(), self._matrix_dim()), requires_grad=True).to(device)
-            self.bias = torch.zeros((self._matrix_dim(), self._matrix_dim()), requires_grad=True).to(device)
+                self.weights = nn.Parameter(torch.randn((self._matrix_dim(), self._matrix_dim())))
+                self.sh_weights.requires_grad = True
+            self.sh_bias = torch.zeros((self._matrix_dim(), self._matrix_dim()))
+            self.sh_bias.requires_grad = True
 
         # check that the word embedding size is a square
         assert word_emb_dim == int(math.sqrt(word_emb_dim)) ** 2
@@ -85,26 +88,26 @@ class Word2MatEncoder(nn.Module):
         elif self.w2m_type == "cbow":
             init_weights = self._init_normal()
 
-        neutral_element = neutral_element.to(device)
-        init_weights = init_weights.to(device)
+        #neutral_element = neutral_element.to(device)
+        #init_weights = init_weights.to(device)
 
         ## concatenate and set weights in the lookup table
         weights = torch.cat([neutral_element,
                              init_weights],
                              dim=0)
         
-        if w2m_type == "cnmow":
-            if self.cnmow_version==5 or self.cnmow_version==6 or self.cnmow_version==8 or self.cnmow_version==9:
-                bias = self.bias.view(1, self.word_emb_dim)
-                if self.cnmow_version==5 or self.cnmow_version==8:
-                    weight = self.weights.view(2, self.word_emb_dim)
-                else:
-                    weight = self.weights.view(1, self.word_emb_dim)
-                weights = torch.cat([neutral_element,
-                                     init_weights,
-                                     bias,
-                                     weight],
-                                    dim=0)
+        #if w2m_type == "cnmow":
+        #    if self.cnmow_version==5 or self.cnmow_version==6 or self.cnmow_version==8 or self.cnmow_version==9:
+        #        bias = self.bias.view(1, self.word_emb_dim)
+        #        if self.cnmow_version==5 or self.cnmow_version==8:
+        #            weight = self.weights.view(2, self.word_emb_dim)
+        #        else:
+        #            weight = self.weights.view(1, self.word_emb_dim)
+        #        weights = torch.cat([neutral_element,
+        #                             init_weights,
+        #                             bias,
+        #                             weight],
+        #                            dim=0)
                 
         self.lookup_table.weight = nn.Parameter(weights)
 
@@ -173,19 +176,19 @@ class Word2MatEncoder(nn.Module):
                 temp = torch.cat((cur_emb, word_matrices[:, i, :]),dim=1)
                 #import pdb
                 #pdb.set_trace()
-                _lambda = torch.sigmoid(torch.matmul(self.weights,temp)+self.bias)
+                _lambda = torch.sigmoid(torch.matmul(self.sh_weights,temp)+self.sh_bias)
                 
-                cur_emd = _lambda*cur_emb + (1-_lambda)*torch.bmm(cur_emb , word_matrices[:, i, :])
+                cur_emb = _lambda*cur_emb + (1-_lambda)*torch.bmm(cur_emb , word_matrices[:, i, :])
                   
             # 6: add shared weights
             elif self.cnmow_version == 6:
                 cur_emb = torch.bmm(cur_emb, word_matrices[:, i, :])
-                cur_emb = torch.matmul(self.weights,cur_emb) + self.bias
+                cur_emb = torch.matmul(self.sh_weights,cur_emb) + self.sh_bias
                 cur_emb = F.relu(cur_emb)
             # 6b: same as 6, but with sigmoid nonlinearity
             elif self.cnmow_version == 601:
                 cur_emb = torch.bmm(cur_emb, word_matrices[:, i, :])
-                cur_emb = torch.matmul(self.weights,cur_emb) + self.bias
+                cur_emb = torch.matmul(self.sh_weights,cur_emb) + self.sh_bias
                 cur_emb = torch.sigmoid(cur_emb)
                 
             # 7: 4 + non-linearity including first word
@@ -196,14 +199,14 @@ class Word2MatEncoder(nn.Module):
             # 8: 5 + non-linearity including the first word
             elif self.cnmow_version == 8:
                 temp = torch.cat((cur_emb, word_matrices[:, i, :]),dim=1)
-                _lambda = torch.sigmoid(torch.matmul(self.weights,temp) +self.bias)
-                cur_emd = _lambda*F.relu(cur_emb) + (1-_lambda)*torch.bmm(F.relu(cur_emb) , word_matrices[:, i, :])
+                _lambda = torch.sigmoid(torch.matmul(self.sh_weights,temp) +self.sh_bias)
+                cur_emb = _lambda*F.relu(cur_emb) + (1-_lambda)*torch.bmm(F.relu(cur_emb) , word_matrices[:, i, :])
                 
             # 9: 5 + bmm instead of cat
             elif self.cnmow_version == 9:
                 temp = torch.bmm(cur_emb, word_matrices[:, i, :])
-                _lambda = torch.sigmoid(torch.matmul(self.weights,temp) +self.bias)
-                cur_emd = _lambda*cur_emb + (1-_lambda)*torch.bmm(cur_emb , word_matrices[:, i, :])
+                _lambda = torch.sigmoid(torch.matmul(self.sh_weights,temp) +self.sh_bias)
+                cur_emb = _lambda*cur_emb + (1-_lambda)*torch.bmm(cur_emb , word_matrices[:, i, :])
 
             else:
                 raise RuntimeError("Unsupported CNMOW version: {}".format(self.cnmow_version))
