@@ -4,6 +4,8 @@ from os.path import isfile, dirname, realpath, join
 import time
 import subprocess
 
+from notify import SlackNotifier
+
 DATA_ROOT       = realpath(join(dirname(__file__), 'data'))
 MODEL_PREFIX    = 'model-'
 EVAL_PREFIX     = 'evaluation-'
@@ -29,6 +31,7 @@ HYBRID_CMD_TEMPLATE = """python3 evaluate_word2mat.py   \
 def main():
     assert os.path.isdir(DATA_ROOT)
 
+    notifier = SlackNotifier()
     evals = []
     models = []
     for f in os.listdir(DATA_ROOT):
@@ -52,6 +55,7 @@ def main():
         elapsed = time.time() - t0
 
         print('----- completed variant: {}, took {:.2f}s'.format(name, elapsed))
+        notifier.notify('DLNLP evaluation: completed variant: {}, took {:.2f}s'.format(name, elapsed))
 
 
 

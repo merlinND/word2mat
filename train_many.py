@@ -8,6 +8,8 @@ from os.path import isfile, dirname, realpath, join
 import time
 import subprocess
 
+from notify import SlackNotifier
+
 DATA_ROOT       = realpath(join(dirname(__file__), 'data'))
 DATASET_1P      = join(DATA_ROOT, 'webbase_tiny')
 DATASET_10P     = join(DATA_ROOT, 'webbase_mini')
@@ -118,7 +120,7 @@ VARIANTS = {
         'word_emb_dim': 784,
         'cnmow_version': 9,
     }),
-    
+
     'cnmow3-hybrid-800-10p': dict(COMMON_ARGS_10P, **{
         'w2m_type': 'hybrid',
         'hybrid_cmow': 'cnmow',
@@ -177,6 +179,8 @@ VARIANTS = {
 def main():
     assert os.path.isdir(DATA_ROOT)
 
+    notifier = SlackNotifier()
+
     for variant_name, _args in VARIANTS.items():
         print('----- Starting variant: {}'.format(variant_name))
         output_dir = join(DATA_ROOT, 'model-' + variant_name)
@@ -222,7 +226,7 @@ def main():
             ))
 
         print('----- completed variant: {}, took {:.2f}s'.format(variant_name, elapsed))
-
+        notifier.notify('DLNLP training: completed variant: {}, took {:.2f}s'.format(variant_name, elapsed))
 
 
 if __name__ == '__main__':
