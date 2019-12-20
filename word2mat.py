@@ -36,7 +36,7 @@ class Word2MatEncoder(nn.Module):
             if self.cnmow_version==6 or self.cnmow_version==601 or self.cnmow_version==9 or self.cnmow_version==901:
                 self.sh_weights = nn.Parameter(torch.randn((self._matrix_dim(), self._matrix_dim()), device=device))
                 self.sh_weights.requires_grad = True
-            self.sh_bias = torch.zeros((self._matrix_dim(), self._matrix_dim()), device=device)
+            self.sh_bias = nn.Parameter(torch.zeros((self._matrix_dim(), self._matrix_dim()), device=device))
             self.sh_bias.requires_grad = True
 
         # check that the word embedding size is a square
@@ -95,7 +95,7 @@ class Word2MatEncoder(nn.Module):
         weights = torch.cat([neutral_element,
                              init_weights],
                              dim=0)
-        
+
         #if w2m_type == "cnmow":
         #    if self.cnmow_version==5 or self.cnmow_version==6 or self.cnmow_version==8 or self.cnmow_version==9:
         #        bias = self.bias.view(1, self.word_emb_dim)
@@ -108,7 +108,7 @@ class Word2MatEncoder(nn.Module):
         #                             bias,
         #                             weight],
         #                            dim=0)
-                
+
         self.lookup_table.weight = nn.Parameter(weights)
 
         # hyper parameter used for the weighted skip connection in th cnmow model
@@ -172,35 +172,36 @@ class Word2MatEncoder(nn.Module):
             ## TODO: compute lambda as a function of the word embeddings using sigmoid to keep it between 0 and 1
             # 5: skip connections with learned parameter without non-linearity
             elif self.cnmow_version == 5:
-                
+
                 temp = torch.cat((cur_emb, word_matrices[:, i, :]),dim=1)
                 _lambda = torch.sigmoid(torch.matmul(self.sh_weights,temp)+self.sh_bias)
                 # Print to make sure that values are changing (i.e. weights are being trained)
-                # print(self.sh_weights[0][0])
+                # print(self.sh_weights[0][0], self.sh_bias[0][0])
                 cur_emb = _lambda*cur_emb + (1-_lambda)*torch.bmm(cur_emb , word_matrices[:, i, :])
-                  
+
             # 6: add shared weights
             elif self.cnmow_version == 6:
                 cur_emb = torch.bmm(cur_emb, word_matrices[:, i, :])
                 cur_emb = torch.matmul(self.sh_weights,cur_emb) + self.sh_bias
                 cur_emb = F.relu(cur_emb)
+                # print(self.sh_weights[0][0], self.sh_bias[0][0])
             # 6b: same as 6, but with sigmoid nonlinearity
             elif self.cnmow_version == 601:
                 cur_emb = torch.bmm(cur_emb, word_matrices[:, i, :])
                 cur_emb = torch.matmul(self.sh_weights,cur_emb) + self.sh_bias
                 cur_emb = torch.sigmoid(cur_emb)
-                
+
             # 7: 4 + non-linearity including first word
             elif self.cnmow_version == 7:
                 cur_emb = F.relu(cur_emb)
                 cur_emb = self._lambda*cur_emb + (1-self._lambda)*torch.bmm(cur_emb , word_matrices[:, i, :])
-                
+
             # 8: 5 + non-linearity including the first word
             elif self.cnmow_version == 8:
                 temp = torch.cat((cur_emb, word_matrices[:, i, :]),dim=1)
                 _lambda = torch.sigmoid(torch.matmul(self.sh_weights,temp) +self.sh_bias)
                 cur_emb = _lambda*F.relu(cur_emb) + (1-_lambda)*torch.bmm(F.relu(cur_emb) , word_matrices[:, i, :])
-                
+
             # 9: 5 + bmm instead of cat
             elif self.cnmow_version == 9:
                 temp = torch.bmm(cur_emb, word_matrices[:, i, :])
